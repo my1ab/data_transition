@@ -21,7 +21,9 @@ git status
 
 echo ""
 echo "=== 检查并创建目标分支 ==="
+# 选择目标分支为
 TARGET_BRANCH="main"
+
 if git show-ref --verify --quiet "refs/heads/$TARGET_BRANCH"; then
     echo "分支 $TARGET_BRANCH 已存在"
 else
