@@ -1,0 +1,4 @@
+No success trajectories generated.
+Start time: 2026-05-04 03:05:07
+End time: 2026-05-04 03:09:02
+Elapsed time: 235.92785143852234s

@@ -1,0 +1,19 @@
+Task 0 SUCCESS at turn 15 in environments [1]
+Task 1 SUCCESS at turn 10 in environments [0, 1]
+Task 2 SUCCESS at turn 5 in environments [0, 3]
+not defined
+not defined
+Task 5 FAILED at turn 6 in environments [2]
+not defined
+Task 7 SUCCESS at turn 5 in environments [1]
+Task 8 FAILED at turn 10 in environments [0]
+Task 9 FAILED at turn 19 in environments [0, 1, 2, 3]
+
+Success trajectories saved to /home/dpepo/verl-agent/coldstart_result_webshop/WebShop_coldstart_15_success.json
+Success count: 4, Success rate: 40.00%
+Total entries: 10
+Mode: parallel
+Number of parallel environments: 4
+Start time: 2026-05-04 23:42:19
+End time: 2026-05-05 00:02:24
+Elapsed time: 1204.6595392227173s

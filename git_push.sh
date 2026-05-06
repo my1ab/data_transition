@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# git remote add my-verl https://github.com/my1ab/data_transition.git
+# git remote -v
+
+# Git 日常提交和推送到远端仓库脚本
+
+set -e
+
+echo "=== 设置 Git 用户信息 ==="
+git config user.name "my1ab"
+git config user.email "my1ab@example.com"
+
+echo ""
+echo "=== 检查当前目录 ==="
+pwd
+
+echo ""
+echo "=== 检查 Git 状态 ==="
+git status
+
+echo ""
+echo "=== 添加所有已追踪文件 ==="
+git add -u
+
+echo ""
+echo "=== 添加所有新文件 ==="
+git add .
+
+echo ""
+echo "=== 排除不需要的文件夹和大文件 ==="
+EXCLUDE_PATHS=(
+    "model/"
+    "coldstart_example/"
+    "coldstart_genaration_webshop/"
+    "*.pt"
+    "*.ckpt"
+    "*.safetensors"
+    "*.tar.gz"
+    "__pycache__/"
+    "*.pyc"
+    "*.pyo"
+)
+
+for path in "${EXCLUDE_PATHS[@]}"; do
+    echo "排除: $path"
+    git reset HEAD "$path" 2>/dev/null || true
+done
+
+echo ""
+echo "=== 检查暂存状态 ==="
+git status
+
+
+# echo ""
+# echo "=== 暂存区大小统计 ==="
+# git diff --cached --stat
+
+# echo ""
+# echo "=== 暂存区总大小 ==="
+# TOTAL_SIZE=$(git diff --cached --numstat | awk '{sum+=$1+$2} END {print sum/1024/1024}')
+# echo "总大小: $TOTAL_SIZE MB"
+
+echo ""
+echo "=== 提交更改 ==="
+git commit -m "Update project files"
+
+echo ""
+echo "=== 推送到远端仓库 main 分支 ==="
+git push my-verl HEAD:main -f
+
+echo ""
+echo "=== 操作完成 ==="
