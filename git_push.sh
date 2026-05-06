@@ -90,7 +90,7 @@ fi
 
 echo ""
 echo "=== 推送到远端仓库 my-verl 分支 ==="
-远程名 来源:目标 强制
+# 格式: git push <远程名> <来源>:<目标> -f
 git push my-verl HEAD:my-verl -f
 
 echo ""
