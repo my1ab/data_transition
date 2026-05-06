@@ -76,22 +76,9 @@ echo "=== 提交更改 ==="
 git commit -m "Update project files"
 
 echo ""
-echo "=== 推送到远端仓库 main 分支 ==="
-git push my-verl HEAD:main -f
-
-echo ""
-echo "=== 创建新分支 my-verl ==="
-if git show-ref --verify --quiet "refs/heads/my-verl"; then
-    echo "分支 my-verl 已存在"
-else
-    echo "创建分支 my-verl"
-    git checkout -b my-verl
-fi
-
-echo ""
-echo "=== 推送到远端仓库 my-verl 分支 ==="
+echo "=== 推送到远端仓库 $TARGET_BRANCH 分支 ==="
 # 格式: git push <远程名> <来源>:<目标> -f
-git push my-verl HEAD:my-verl -f
+git push my-verl HEAD:$TARGET_BRANCH -f
 
 echo ""
 echo "=== 操作完成 ==="
