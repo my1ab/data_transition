@@ -69,14 +69,14 @@ echo ""
 echo "=== 推送到远端仓库 main 分支 ==="
 git push my-verl HEAD:main -f
 
-# echo ""
-# echo "=== 创建新分支 my-verl ==="
-# git checkout -b my-verl
+echo ""
+echo "=== 创建新分支 my-verl ==="
+git checkout -b my-verl
 
-# echo ""
-# echo "=== 推送到远端仓库 my-verl 分支 ==="
-# 远程名 来源:目标 强制
-# git push my-verl HEAD:my-verl -f
+echo ""
+echo "=== 推送到远端仓库 my-verl 分支 ==="
+远程名 来源:目标 强制
+git push my-verl HEAD:my-verl -f
 
 echo ""
 echo "=== 操作完成 ==="
