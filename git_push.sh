@@ -20,6 +20,16 @@ echo "=== 检查 Git 状态 ==="
 git status
 
 echo ""
+echo "=== 检查并创建目标分支 ==="
+TARGET_BRANCH="main"
+if git show-ref --verify --quiet "refs/heads/$TARGET_BRANCH"; then
+    echo "分支 $TARGET_BRANCH 已存在"
+else
+    echo "分支 $TARGET_BRANCH 不存在，创建该分支"
+    git branch $TARGET_BRANCH
+fi
+
+echo ""
 echo "=== 添加所有已追踪文件 ==="
 git add -u
 
