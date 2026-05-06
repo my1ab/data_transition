@@ -81,7 +81,12 @@ git push my-verl HEAD:main -f
 
 echo ""
 echo "=== 创建新分支 my-verl ==="
-git checkout -b my-verl
+if git show-ref --verify --quiet "refs/heads/my-verl"; then
+    echo "分支 my-verl 已存在"
+else
+    echo "创建分支 my-verl"
+    git checkout -b my-verl
+fi
 
 echo ""
 echo "=== 推送到远端仓库 my-verl 分支 ==="
