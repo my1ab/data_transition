@@ -52,11 +52,13 @@ def split_by_sampling(split_data, base_output_path, seed=42):
     sample_1012 = dict(remaining_after_head[:1012])
     exclude_1012 = dict(remaining_after_head[1012:])
     
+    # 定义输出文件路径
     path_head_1500 = base_output_path.replace('.json', '_head_1500.json')
     path_1500_max = base_output_path.replace('.json', '_1500_max.json')
     path_sample_1012 = base_output_path.replace('.json', '_sample_1012.json')
     path_exclude_1012 = base_output_path.replace('.json', '_exclude_1012.json')
     
+    # 统一存文件
     with open(path_head_1500, 'w', encoding='utf-8') as f:
         json.dump(head_1500, f, indent=2, ensure_ascii=False)
     
@@ -87,8 +89,15 @@ def split_by_sampling(split_data, base_output_path, seed=42):
 
 if __name__ == "__main__":
     input_path = '/home/dpepo/data/items_human_ins_cleaned.json'
-    output_path = '/home/dpepo/data/items_human_ins_split.json'
+    # 提取目录
+    input_dir = os.path.dirname(input_path)
+    output_dir = os.path.join(input_dir, 'splited')
+    os.makedirs(output_dir, exist_ok=True)
     
+    output_filename = os.path.basename(input_path).replace('.json', '_split.json')
+    output_path = os.path.join(output_dir, output_filename)
+    
+    # 将其提取为独立的 item 并按采样分割为不同数据集
     split_data = split_instructions(input_path, output_path)
     if split_data:
         split_by_sampling(split_data, output_path, seed=42)
