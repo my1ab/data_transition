@@ -155,6 +155,7 @@ class WebshopMultiProcessEnv(gym.Env):
         self.split = split
         if not is_train: assert group_n == 1
 
+        # 此处用到指定的seed42
         self._rng = np.random.RandomState(seed)
 
         self._env_kwargs = env_kwargs if env_kwargs is not None else {'observation_mode': 'text', 'num_products': None}
@@ -177,32 +178,41 @@ class WebshopMultiProcessEnv(gym.Env):
         # test: 6000-      → 最终评估专用（训练第四步）
         # ---------------------------------------------------------------------------#
         # 按训练流程顺序排列：SFT → RL训练 → RL验证 → 最终评估
-        if split == 'sft':
-            self.goal_idxs = range(min(2500, len(goals)))
-        elif split == 'train':
-            self.goal_idxs = range(2500, min(5000, len(goals)))
-        elif split == 'eval':
-            self.goal_idxs = range(5000, min(6000, len(goals)))
-        elif split == 'test':
-            self.goal_idxs = range(6000, len(goals))
+        # if split == 'sft':
+        #     self.goal_idxs = range(min(2500, len(goals)))
+        # elif split == 'train':
+        #     self.goal_idxs = range(2500, min(5000, len(goals)))
+        # elif split == 'eval':
+        #     self.goal_idxs = range(5000, min(6000, len(goals)))
+        # elif split == 'test':
+        #     self.goal_idxs = range(6000, len(goals))
+        # else:
+        #     # Default to train split if invalid split is provided
+        #     self.goal_idxs = range(2500, min(5000, len(goals)))
+
+        # 以下为原始代码，此时为顺序读取
+        # ------- original ----------#
+        if args.num is None:
+            if split == 'test':
+                self.goal_idxs = range(500)
+            elif split == 'eval':
+                self.goal_idxs = range(500, 1500)
+            elif split == 'train':
+                self.goal_idxs = range(1500, len(self.env.server.goals))
+            elif split == 'sft':
+                # self.goal_idxs = range(min(2500, len(goals)))
+                self.goal_idxs = range(1500, len(self.env.server.goals))
         else:
-            # Default to train split if invalid split is provided
-            self.goal_idxs = range(2500, min(5000, len(goals)))
+            self.goal_idxs = range(len(self.env.server.goals))
+
+        # if not self.is_train:
+        #     self.goal_idxs = range(500)
+        # else:
+        #     self.goal_idxs = range(500, len(goals))
             
         print(f"Split: {split}, Goal indices: {self.goal_idxs}")
 
-        # 修改 original code before fix
-        # if not self.is_train:
-        #     self.goal_idxs = range(min(500, len(goals)))
-        # # 进入分支
-        # else:
-        #     if len(goals) <= 500:
-        #         self.goal_idxs = range(len(goals))
-        #     else:
-        #         self.goal_idxs = range(500, len(goals))
-            
-        # print(self.goal_idxs)
-
+        
     # ------------------------------------------------------------------
     # Base API ----------------------------------------------------------
     # ------------------------------------------------------------------

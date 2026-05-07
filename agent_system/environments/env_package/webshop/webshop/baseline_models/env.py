@@ -24,6 +24,7 @@ class WebEnv:
                                    get_image=args.get_image,
                                    num_prev_obs=args.num_prev_obs, num_prev_actions=args.num_prev_actions,
                                    session_prefix=id)
+        # 原版
         if args.num is None:
             if split == 'test':
                 self.goal_idxs = range(500)

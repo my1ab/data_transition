@@ -341,7 +341,7 @@ def get_single_trajectory(env, task_idx, env_idx=0, turns=50, show_turn=False, u
 
 def generate_coldstart_data(output_file, num_cpus=0.1, num_samples=500, turns=50, use_ray=False, use_para=0, show_turn=False, 
                             use_history=True,load_all = 0, human_goals=False, num_para=1, group_n=1, env_num=50,
-                            only_test=0, prompt=1):
+                            only_test=0, prompt=1, limit_goals=1012):
     """
     Generate coldstart data for WebShop in JSON format.
     
@@ -360,11 +360,13 @@ def generate_coldstart_data(output_file, num_cpus=0.1, num_samples=500, turns=50
     print(f'Start time: {start_time_str}')
     env_msg1 = f'Generating {num_samples} samples with {turns} max turns each...'
     env_msg2 = f'group_n: {group_n}, env_num: {env_num}, num_para: {num_para}'
+    env_msg3 = f'load_all: {load_all}, human_goals: {human_goals}, limit_goals: {limit_goals}'
     with open(log_file, 'w') as f:
-        f.write(env_msg1)
-        f.write(env_msg2)
+        f.write(env_msg1 + '\n')
+        f.write(env_msg2 + '\n')
+        f.write(env_msg3 + '\n')
 
-    print(env_msg1), print(env_msg2)
+    print(env_msg1), print(env_msg2), print(env_msg3)
     expected_num_para = group_n * env_num
     # print(f"num_para ({num_para}) > group_n * env_num ({group_n} * {env_num} = {expected_num_para})")
     if num_para > expected_num_para:
@@ -394,6 +396,7 @@ def generate_coldstart_data(output_file, num_cpus=0.1, num_samples=500, turns=50
         'observation_mode': 'text',
         'num_products': None,
         'human_goals': human_goals,
+        'limit_goals': limit_goals,
         'file_path': file_path,
         'attr_path': attr_path
     }
@@ -522,21 +525,22 @@ if __name__ == "__main__":
                                 num_cpus=0.5,
                                 use_para=1, num_para=4, group_n=8, env_num=1,
                                 show_turn=1, use_history=0, load_all=0, 
-                                # human_goals=True, 
-                                human_goals=False,
+                                human_goals=True, 
+                                # human_goals=False,
                                 # only_test=1,
-                                prompt=1
+                                prompt=1,
+                                limit_goals=1012
                                 )
-        print(f'====== gap between two sets =======')
-        generate_coldstart_data(OUTPUT_FILE, num_samples=10, turns=20, 
-                                # use_ray=False, 
-                                num_cpus=0.5,
-                                use_para=1, num_para=4, group_n=1, env_num=8,
-                                show_turn=1, use_history=0, load_all=0, 
-                                # human_goals=True, 
-                                human_goals=False,
-                                # only_test=1,
-                                prompt=2
-                                )
+        # print(f'====== gap between two sets =======')
+        # generate_coldstart_data(OUTPUT_FILE, num_samples=10, turns=20, 
+        #                         # use_ray=False, 
+        #                         num_cpus=0.5,
+        #                         use_para=1, num_para=4, group_n=1, env_num=8,
+        #                         show_turn=1, use_history=0, load_all=0, 
+        #                         # human_goals=True, 
+        #                         human_goals=False,
+        #                         # only_test=1,
+        #                         prompt=2
+        #                         )
         
         # show_turn为bool型 但可以赋值为1/0 true表示所有非0数
