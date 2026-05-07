@@ -21,7 +21,7 @@ git status
 
 echo ""
 echo "=== 检查并创建目标分支 ==="
-# 选择目标分支为
+# 手动选择目标分支
 TARGET_BRANCH="main"
 # TARGET_BRANCH="my-verl"
 
