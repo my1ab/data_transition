@@ -2,6 +2,7 @@ import bisect
 import hashlib
 import logging
 import random
+import os
 from os.path import dirname, abspath, join
 
 BASE_DIR = dirname(abspath(__file__))
@@ -18,6 +19,8 @@ FEAT_CONV = '/home/dpepo/data/feat_conv.pt'
 FEAT_IDS = '/home/dpepo/data/feat_ids.pt'
 
 HUMAN_ATTR_PATH = '/home/dpepo/data/items_human_ins.json'
+# HUMAN_ATTR_PATH = os.environ.get('HUMAN_ATTR_PATH', '/home/dpepo/data/items_human_ins.json')
+# HUMAN_ATTR_PATH = os.environ.get('HUMAN_ATTR_PATH', '/home/dpepo/data/splited/items_human_ins_cleaned_split.json')
 
 def random_idx(cum_weights):
     """Generate random index by sampling uniformly from sum of all weights, then

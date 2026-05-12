@@ -245,10 +245,19 @@ def load_products(filepath, attrpath, num_products=None, human_goals=True):
     if human_goals:
         with open(HUMAN_ATTR_PATH) as f:
             human_attributes = json.load(f)
+        # 兼容异常情况
+        # Check if the new format is used (keys like "ASIN_0" instead of "ASIN")
+        if human_attributes and any('_' in key for key in list(human_attributes.keys())[:5]):
+            # Convert new format {"ASIN_0": {...}, "ASIN_1": {...}} to old format {"ASIN": [{...}, {...}]}
+            new_human_attributes = defaultdict(list)
+            for key, value in human_attributes.items():
+                asin = key.rsplit('_', 1)[0]  # Extract ASIN from "ASIN_0"
+                new_human_attributes[asin].append(value)
+            human_attributes = dict(new_human_attributes)
     with open(attrpath) as f:
         attributes = json.load(f)
-    with open(HUMAN_ATTR_PATH) as f:
-        human_attributes = json.load(f)
+    # with open(HUMAN_ATTR_PATH) as f:
+    #     human_attributes = json.load(f)
     print('Attributes loaded.')
 
     asins = set()

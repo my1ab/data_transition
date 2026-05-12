@@ -1,0 +1,3 @@
+Generating 20 samples with 25 max turns each...
+group_n: 1, env_num: 4, num_para: 4
+load_all: 0, human_goals: True, limit_goals: 1012

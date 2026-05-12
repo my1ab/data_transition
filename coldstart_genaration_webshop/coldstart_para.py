@@ -31,7 +31,7 @@ from agent_system.environments.env_package.webshop import webshop_projection
 # 引入本地官方 prompt
 from webshop import WEBSHOP_TEMPLATE_NO_HIS, WEBSHOP_TEMPLATE, system_message
 from prompts_webshop import system_message_para, reason_prompt_para
-from prompts_webshop2 import system_message_para2, reason_prompt_para2
+from prompts_webshop2 import system_message_para2, reason_prompt_para2, reason_prompt_para2_with_history
 # /home/dpepo/verl-agent/agent_system/environments/env_package/webshop/webshop/web_agent_site/envs/web_agent_text_env.py
 from agent_system.environments.env_package.webshop.webshop.web_agent_site.envs.web_agent_text_env \
 import WebAgentTextEnv
@@ -42,16 +42,38 @@ print("import WebAgentTextEnv success")
 
 remote = 0
 
-def deepseek(messages):
+def deepseek(messages, ds_model=1, effort=1):
     # sk-05267e6863d6455eb1a8c2fc92df3005
     client = OpenAI(api_key="sk-05267e6863d6455eb1a8c2fc92df3005", base_url="https://api.deepseek.com")
 
+    if ds_model == 1:
+        model_name = "deepseek-v4-flash"
+        # print("exit")
+        # exit(0)
+    elif ds_model == 2:
+        model_name = "deepseek-v4-pro"
+    else:
+        model_name = "deepseek-v4-flash"
+
+    if effort == 1:
+        reasoning_effort = "high"
+        # print("exit")
+        # exit(0)
+    elif effort == 2:
+        reasoning_effort = "max"
+    else:
+        reasoning_effort = "high"
+
     response = client.chat.completions.create(
-        model="deepseek-chat",
+        # model="deepseek-chat",
+        model=model_name,
         messages=messages,
         stream=False,
-        temperature=1,
-        # reasoning_effort="max"
+        # reasoning_effort="high",
+        reasoning_effort=reasoning_effort,
+        extra_body={"thinking": {"type": "enabled"}}
+        # temperature=1,
+        
     )
     
     return response.choices[0].message.content 
@@ -141,7 +163,7 @@ def get_unique_filename(file_path):
 
 # Main Logic - Generate coldstart data for WebShop
 def get_single_trajectory(env, task_idx, env_idx=0, turns=50, show_turn=False, use_history=True,
-                          use_para=0, num_para=1, env_num=50, group_n=1, prompt=1):
+                          use_para=0, num_para=1, env_num=50, group_n=1, prompt=1, ds_model=1, effort=1, history_length=5):
     """
     Generate a single trajectory for WebShop environment with multiple turns
     Returns messages in the format:
@@ -177,7 +199,6 @@ def get_single_trajectory(env, task_idx, env_idx=0, turns=50, show_turn=False, u
     
     # 历史记录列表
     action_history = []
-    history_length = 5  # 保留最近5步历史
     
     # Add system message - only once at the beginning
     if prompt == 2:
@@ -197,11 +218,24 @@ def get_single_trajectory(env, task_idx, env_idx=0, turns=50, show_turn=False, u
             admissible_commands = "\n".join([f"  - {action}" for action in available_actions_parallel[idx]])
             obs_prompt += f'<observation_{idx}>\nThe observation and next candidated actions of {idx}-th environment are:\nObservation:\n{obs_parallel[idx]}\nNext Possible Actions:\n{admissible_commands}\n</observation_{idx}>\n'
         
-        if prompt == 2:
+        admissible_actions = "\n".join([f"  - {action}" for env_actions in available_actions_parallel for action in env_actions])
+        
+        if use_history and prompt == 2:
+            action_history_str = "\n".join([f"Step {h['step']}: Observation: {h['obs'][:200]}... Action: {h['action']}" for h in action_history[-history_length:]])
+            message_sent = reason_prompt_para2_with_history.format(
+                task_description=task_descriptions[0],
+                step_count=turn,
+                history_length=min(len(action_history), history_length),
+                action_history=action_history_str if action_history else "None",
+                current_step=turn + 1,
+                current_observation=obs_prompt,
+                available_actions=admissible_actions
+            )
+        elif prompt == 2:
             message_sent = reason_prompt_para2.format(
                 task_description=task_descriptions[0],
                 current_observation=obs_prompt,
-                admissible_actions="\n".join([f"  - {action}" for actions in available_actions_parallel for action in actions]),
+                admissible_actions=admissible_actions,
                 num_parallel=num_para,
                 total_envs=total_envs
             )
@@ -209,7 +243,7 @@ def get_single_trajectory(env, task_idx, env_idx=0, turns=50, show_turn=False, u
             message_sent = reason_prompt_para.format(
                 task_description=task_descriptions[0],
                 current_observation=obs_prompt,
-                admissible_actions="\n".join([f"  - {action}" for actions in available_actions_parallel for action in actions]),
+                admissible_actions=admissible_actions,
                 num_parallel=num_para,
                 total_envs=total_envs
             )
@@ -217,7 +251,7 @@ def get_single_trajectory(env, task_idx, env_idx=0, turns=50, show_turn=False, u
         # Add user message (user提出需求)
         messages.append({"role": "user", "content": message_sent})
         
-        assistant_response = deepseek(messages=messages)
+        assistant_response = deepseek(messages=messages, ds_model=ds_model, effort=effort)
         result = extract_think_and_action(assistant_response, use_para=use_para, num_para=num_para, total_envs=total_envs)
         # result = extract_think_and_action(output, use_para=use_para, num_para=num_para, total_envs=total_envs)
         
@@ -273,12 +307,17 @@ def get_single_trajectory(env, task_idx, env_idx=0, turns=50, show_turn=False, u
             available_actions_parallel = [info.get('available_actions', []) for info in info_parallel]
             
             # 记录历史
-            # for idx in range(total_envs):
-            #     if normalized_actions[idx]:
-            #         action_history.append({
-            #             'obs': obs_parallel[idx],
-            #             'action': normalized_actions[idx]
-            #         })
+            if use_history:
+                for idx in range(total_envs):
+                    if normalized_actions[idx] and normalized_actions[idx] != 'null' and normalized_actions[idx] != 'None':
+                        action_history.append({
+                            'step': turn + 1,
+                            'obs': obs_parallel[idx],
+                            'action': normalized_actions[idx]
+                        })
+                # 保持历史记录长度限制
+                if len(action_history) > history_length:
+                    action_history = action_history[-history_length:]
         else:
             # 没有有效动作，reward_list为 None
             # rewards = [None] * total_envs
@@ -290,6 +329,7 @@ def get_single_trajectory(env, task_idx, env_idx=0, turns=50, show_turn=False, u
                 # action = result['actions'].get(idx)
                 # normalized_actions.append(action)
         assistant_msg = {
+            "task_idx": task_idx,
             "role": "assistant",
             "content": assistant_response,
             "rewards": json.dumps(reward_list),
@@ -339,34 +379,60 @@ def get_single_trajectory(env, task_idx, env_idx=0, turns=50, show_turn=False, u
         print(status_msg)
     return messages, success_flag, status_msg
 
-def generate_coldstart_data(output_file, num_cpus=0.1, num_samples=500, turns=50, use_ray=False, use_para=0, show_turn=False, 
+def generate_coldstart_data(output_file, num_cpus=0.1, end_idx=500, turns=50, use_ray=False, use_para=0, show_turn=False, 
                             use_history=True,load_all = 0, human_goals=False, num_para=1, group_n=1, env_num=50,
-                            only_test=0, prompt=1, limit_goals=1012):
+                            only_test=0, prompt=1, limit_goals=-1, ds_model=1, effort=1, history_length=5, seed=42,
+                            start_index=0):
     """
     Generate coldstart data for WebShop in JSON format.
     
     Args:
         output_file: Path to save the generated data
-        num_samples: Number of samples to generate
+        end_idx: End index (inclusive) for data generation
         turns: Maximum number of turns per trajectory
         show_turn: If True, adds turn number markers to message contents (default: False)
         use_history: If True, use WEBSHOP_TEMPLATE with history, else use WEBSHOP_TEMPLATE_NO_HIS (default: True)
+        start_index: Start index for data generation (default: 0)
+        ds_model: Model selection (1: flash model, 2: pro model)
     """
-    output_file = get_unique_filename(output_file)
+    # output_file = get_unique_filename(output_file)
     log_file = output_file.replace('.json', '_success.txt')
+
+    # 当log文件存在但output文件不存在时，删除log文件并重新开始
+    if os.path.exists(log_file) and not os.path.exists(output_file):
+        print(f"Warning: log file exists ({log_file}) but output file does not exist.")
+        print("This indicates a previous run was interrupted.")
+        print("Deleting incomplete log file and starting fresh...")
+        os.remove(log_file)
+
     start_time = time.time()
     start_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
     
+    
+    
     print(f'Start time: {start_time_str}')
-    env_msg1 = f'Generating {num_samples} samples with {turns} max turns each...'
+    print(f'log_file: {log_file}')
+    
+    if end_idx < start_index:
+        print(f"Error: end_idx ({end_idx}) must be >= start_index ({start_index})")
+        return
+    
+    model_name = "deepseek-v4-flash" if ds_model == 1 else "deepseek-v4-pro"
+    env_msg1 = f'Generating samples (idx {start_index} to {end_idx}) with {turns} max turns each...'
     env_msg2 = f'group_n: {group_n}, env_num: {env_num}, num_para: {num_para}'
-    env_msg3 = f'load_all: {load_all}, human_goals: {human_goals}, limit_goals: {limit_goals}'
+    env_msg3 = f'load_all: {load_all}, human_goals: {human_goals}, limit_goals: {limit_goals}, seed: {seed}, start_index: {start_index}, end_idx: {end_idx}'
+    env_msg4 = f'ds_model: {ds_model} ({model_name}, effort: {effort})'
+    env_msg5 = f'use_history: {use_history}, history_length: {history_length}, prompt: {prompt}'
     with open(log_file, 'w') as f:
         f.write(env_msg1 + '\n')
         f.write(env_msg2 + '\n')
         f.write(env_msg3 + '\n')
-
-    print(env_msg1), print(env_msg2), print(env_msg3)
+        f.write(env_msg4 + '\n')
+        f.write(env_msg5 + '\n')
+    print(f"\n{'='*80}\n")
+    print(env_msg1), print(env_msg2), print(env_msg3), print(env_msg4), print(env_msg5)
+    print(f"\n{'='*80}\n")
+    
     expected_num_para = group_n * env_num
     # print(f"num_para ({num_para}) > group_n * env_num ({group_n} * {env_num} = {expected_num_para})")
     if num_para > expected_num_para:
@@ -404,7 +470,7 @@ def generate_coldstart_data(output_file, num_cpus=0.1, num_samples=500, turns=50
     # Build environment - parallel mode
     # SFT数据生成使用 'sft' split（1500-4000），与RL训练（4000-）完全隔离
     env = build_webshop_envs(
-        seed=42,
+        seed=seed,
         env_num=env_num,
         group_n=group_n,
         resources_per_worker={'num_cpus': num_cpus},
@@ -415,22 +481,39 @@ def generate_coldstart_data(output_file, num_cpus=0.1, num_samples=500, turns=50
     
     print(f'Environment built, took {time.time() - env_start_time} seconds')
     
+    # 如果需要从中间开始，先跳过前 start_index 次 reset 以同步随机数状态
+    if start_index > 0:
+        print(f"\n{'='*80}\n")
+        skip_start_time = time.time()
+        print(f"Skipping first {start_index} resets to sync random state...")
+        for _ in range(start_index):
+            env.reset()
+        skip_time = time.time() - skip_start_time
+        print(f"Done skipping {start_index} resets, took {skip_time} seconds.")
+        print(f"\n{'='*80}\n")
+        with open(log_file, 'a') as f:
+            f.write(f"Done skipping {start_index} resets, took {skip_time} seconds.\n")
+    
     # Generate data
     coldstart_data = []
     success_data = []  # 存储成功的轨迹（格式与原message相同）
     
+    
     if only_test == 1:
-        env.close()
         print('only_test True')
+        env.close()
+        
         return
 
-    for i in tqdm(range(num_samples), desc="Generating coldstart data"):
+    for i in tqdm(range(start_index, end_idx + 1), desc="Generating coldstart data"):
         try:
             # 得到单条轨迹
             # env = WebshopSingleEnv
             trajectory, success_flag, status_msg = get_single_trajectory(env, task_idx=i, env_idx=0, turns=turns, use_para=use_para, 
                                                show_turn=show_turn, num_para=num_para, use_history=use_history,
-                                               env_num=env_num, group_n=group_n, prompt=prompt)
+                                               env_num=env_num, group_n=group_n, prompt=prompt, ds_model=ds_model, 
+                                               effort=effort, history_length=history_length
+                                               )
             # For non-Ray mode, each trajectory is a messages list
             coldstart_data.append(trajectory)
             
@@ -503,44 +586,57 @@ def generate_coldstart_data(output_file, num_cpus=0.1, num_samples=500, turns=50
 if __name__ == "__main__":
     # Configuration
     # /home/dpepo/verl-agent/coldstart_genaration_webshop/webshop_coldstart.py
-    remote = 0
+    remote = 1
 
     if remote == 0:
-        OUTPUT_FILE = f'/home/dpepo/verl-agent/coldstart_result_webshop/WebShop_coldstart.json'  
+        OUTPUT_FILE_BASE = f'/home/dpepo/verl-agent/coldstart_result_webshop/WebShop_coldstart'  
     else:
-        OUTPUT_FILE = f'/diskpool/home/xuxz/verl-agent/coldstart_result_webshop/WebShop_coldstart.json'
+        OUTPUT_FILE_BASE = f'/diskpool/home/xuxz/verl-agent/coldstart_result_webshop/WebShop_coldstart'
         
-    if OUTPUT_FILE and not os.path.exists(os.path.dirname(OUTPUT_FILE)):
-            os.makedirs(os.path.dirname(OUTPUT_FILE))
     
-    # Generate coldstart data
+    
+    # Generate coldstart data for each seed in the list
     move = 2
     if move == 1:
         test_api_connection()
     elif move == 2:
         test_api_connection()
-        
-        generate_coldstart_data(OUTPUT_FILE, num_samples=20, turns=25, 
-                                # use_ray=False, 
-                                num_cpus=0.5,
-                                use_para=1, num_para=4, group_n=8, env_num=1,
-                                show_turn=1, use_history=0, load_all=0, 
-                                human_goals=True, 
-                                # human_goals=False,
-                                # only_test=1,
-                                prompt=1,
-                                limit_goals=1012
-                                )
-        # print(f'====== gap between two sets =======')
-        # generate_coldstart_data(OUTPUT_FILE, num_samples=10, turns=20, 
-        #                         # use_ray=False, 
-        #                         num_cpus=0.5,
-        #                         use_para=1, num_para=4, group_n=1, env_num=8,
-        #                         show_turn=1, use_history=0, load_all=0, 
-        #                         # human_goals=True, 
-        #                         human_goals=False,
-        #                         # only_test=1,
-        #                         prompt=2
-        #                         )
+        # 手动输入的 seed 列表
+        # SEEDS = [42, 100, 200, 300]  # 可以根据需要修改
+        # SEEDS = [42, 100] 
+        SEEDS = [42]
+        for seed in SEEDS:
+            # 为每个 seed 生成唯一的输出文件名
+            OUTPUT_FILE = f'{OUTPUT_FILE_BASE}_seed_{seed}.json'
+            
+            if OUTPUT_FILE and not os.path.exists(os.path.dirname(OUTPUT_FILE)):
+                os.makedirs(os.path.dirname(OUTPUT_FILE))
+            
+            print(f"\n{'='*80}\n")
+            print(f"Generating data with seed={seed}")
+            output_file = get_unique_filename(OUTPUT_FILE)
+            print(f"Output file: {output_file}")
+            print(f"\n{'='*80}\n")
+            
+            generate_coldstart_data(output_file,  turns=50, 
+                                    num_cpus=1,
+                                    use_para=1, num_para=5, group_n=1, env_num=5,
+                                    show_turn=1,  
+                                    use_history=0,
+                                    load_all=0, 
+                                    human_goals=False,
+                                    prompt=1,
+
+                                    ds_model=1, 
+                                    effort=1,
+                                    seed=seed,
+                                    start_index=50,
+                                    end_idx=99,
+                                    only_test=0
+                                    )
+            
+            print(f"\n{'='*80}\n")
+            print(f"Finished generating data with seed={seed}")
+            print(f"\n{'='*80}\n")
         
         # show_turn为bool型 但可以赋值为1/0 true表示所有非0数

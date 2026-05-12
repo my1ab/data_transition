@@ -77,133 +77,133 @@ def test_api_connection():
         print("Please check your API key and network connection.")
         return False
 
-class WebshopSingleEnv:
-    """A non-Ray, single-process wrapper around WebAgentTextEnv.
-    Mirrors the interface of WebshopMultiProcessEnv for compatibility.
-    """
-    def __init__(
-        self,
-        seed: int,
-        env_num: int = 1,
-        group_n: int = 1,
-        is_train: bool = True,
-        split: str = 'train',
-        env_kwargs: dict = None,
-    ) -> None:
-        self.group_n = group_n
-        self.env_num = env_num
-        self.num_processes = env_num * group_n
-        self.is_train = is_train
-        self.split = split
+# class WebshopSingleEnv:
+#     """A non-Ray, single-process wrapper around WebAgentTextEnv.
+#     Mirrors the interface of WebshopMultiProcessEnv for compatibility.
+#     """
+#     def __init__(
+#         self,
+#         seed: int,
+#         env_num: int = 1,
+#         group_n: int = 1,
+#         is_train: bool = True,
+#         split: str = 'train',
+#         env_kwargs: dict = None,
+#     ) -> None:
+#         self.group_n = group_n
+#         self.env_num = env_num
+#         self.num_processes = env_num * group_n
+#         self.is_train = is_train
+#         self.split = split
         
-        # 种子42随机
-        self._rng = np.random.RandomState(seed)
-        self._env_kwargs = env_kwargs if env_kwargs is not None else {'observation_mode': 'text', 'num_products': None}
+#         # 种子42随机
+#         self._rng = np.random.RandomState(seed)
+#         self._env_kwargs = env_kwargs if env_kwargs is not None else {'observation_mode': 'text', 'num_products': None}
         
-        # 封装WebAgentTextEnv
-        self._env = WebAgentTextEnv(**self._env_kwargs)
+#         # 封装WebAgentTextEnv
+#         self._env = WebAgentTextEnv(**self._env_kwargs)
         
-        # Get goals from the environment's server
-        self.goals = self._env.server.goals
+#         # Get goals from the environment's server
+#         self.goals = self._env.server.goals
         
-        # ------- Four-way split strategy (ordered by training flow) ----------#
-        # sft: 0-2500      → SFT训练专用（训练第一步）
-        # train: 2500-5000 → RL训练专用（训练第二步）
-        # eval: 5000-6000  → RL验证专用（训练第三步）
-        # test: 6000-      → 最终评估专用（训练第四步）
-        # -----------------------------------------------------------------------------------#
-        num_goals = len(self.goals)
-        if split == 'sft':
-            self.goal_idxs = range(min(2500, num_goals))
-        elif split == 'train':
-            self.goal_idxs = range(2500, min(5000, num_goals))
-        elif split == 'eval':
-            self.goal_idxs = range(5000, min(6000, num_goals))
-        elif split == 'test':
-            self.goal_idxs = range(6000, num_goals)
-        else:
-            # Default to train split if invalid split is provided
-            self.goal_idxs = range(2500, min(5000, num_goals))
+#         # ------- Four-way split strategy (ordered by training flow) ----------#
+#         # sft: 0-2500      → SFT训练专用（训练第一步）
+#         # train: 2500-5000 → RL训练专用（训练第二步）
+#         # eval: 5000-6000  → RL验证专用（训练第三步）
+#         # test: 6000-      → 最终评估专用（训练第四步）
+#         # -----------------------------------------------------------------------------------#
+#         num_goals = len(self.goals)
+#         if split == 'sft':
+#             self.goal_idxs = range(min(2500, num_goals))
+#         elif split == 'train':
+#             self.goal_idxs = range(2500, min(5000, num_goals))
+#         elif split == 'eval':
+#             self.goal_idxs = range(5000, min(6000, num_goals))
+#         elif split == 'test':
+#             self.goal_idxs = range(6000, num_goals)
+#         else:
+#             # Default to train split if invalid split is provided
+#             self.goal_idxs = range(2500, min(5000, num_goals))
         
-        # 打印
-        print(f"Loaded {len(self.goal_idxs)} goals (split={split})")
+#         # 打印
+#         print(f"Loaded {len(self.goal_idxs)} goals (split={split})")
         
-        # 顺序取索引的计数器
-        self._goal_idx_counter = 0
+#         # 顺序取索引的计数器
+#         self._goal_idx_counter = 0
     
-    # 自定义的step  制作列表并转换接口
-    def step(self, actions: list[str]):
-        """Execute a step in the environment.
-        Args:
-            actions: List of actions (one per environment, but we only use the first)
-        Returns:
-            obs_list, reward_list, done_list, info_list
-        """
-        action = actions[0] if actions else None
+#     # 自定义的step  制作列表并转换接口
+#     def step(self, actions: list[str]):
+#         """Execute a step in the environment.
+#         Args:
+#             actions: List of actions (one per environment, but we only use the first)
+#         Returns:
+#             obs_list, reward_list, done_list, info_list
+#         """
+#         action = actions[0] if actions else None
         
-        # 环境交互并得到reward
-        # 此处用到WebAgentTextEnv的两个核心方法
-        # self._env = WebAgentTextEnv(**self._env_kwargs)
-        # return obs_list, reward_list, done_list, info_list, reward
-        obs, reward, done, info, action_valid = self._env.step(action)
-        info = dict(info or {})
-        info['available_actions'] = self._env.get_available_actions()['clickables']
-        info['task_score'] = reward
+#         # 环境交互并得到reward
+#         # 此处用到WebAgentTextEnv的两个核心方法
+#         # self._env = WebAgentTextEnv(**self._env_kwargs)
+#         # return obs_list, reward_list, done_list, info_list, reward
+#         obs, reward, done, info, action_valid = self._env.step(action)
+#         info = dict(info or {})
+#         info['available_actions'] = self._env.get_available_actions()['clickables']
+#         info['task_score'] = reward
         
 
-        # self.num_processes = env_num * group_n 总共商品数
-        obs_list = [obs] * self.num_processes
-        reward_list = [reward] * self.num_processes
-        done_list = [done] * self.num_processes
-        info_list = [info] * self.num_processes
+#         # self.num_processes = env_num * group_n 总共商品数
+#         obs_list = [obs] * self.num_processes
+#         reward_list = [reward] * self.num_processes
+#         done_list = [done] * self.num_processes
+#         info_list = [info] * self.num_processes
         
-        return obs_list, reward_list, done_list, info_list, reward, action_valid
+#         return obs_list, reward_list, done_list, info_list, reward, action_valid
     
-    def reset(self):
-        """Reset the environment with sequential goal index."""
-        rand = 1
-        if rand == 1:
-            # 随机选择一个goal
-            idx = self._rng.choice(self.goal_idxs, size=self.env_num, replace=False)
-        else: 
-            # 顺序取索引
-            idx = [self._goal_idx_counter % len(self.goal_idxs)]
-        self._goal_idx_counter += 1
-        idx = np.repeat(idx, self.group_n).tolist()
+#     def reset(self):
+#         """Reset the environment with sequential goal index."""
+#         rand = 1
+#         if rand == 1:
+#             # 随机选择一个goal
+#             idx = self._rng.choice(self.goal_idxs, size=self.env_num, replace=False)
+#         else: 
+#             # 顺序取索引
+#             idx = [self._goal_idx_counter % len(self.goal_idxs)]
+#         self._goal_idx_counter += 1
+#         idx = np.repeat(idx, self.group_n).tolist()
         
-        obs, info = self._env.reset(session=idx[0])
-        # info被设为none导致没有goal  需要从环境变量获取
-        info = dict(info or {})
-        info['available_actions'] = self._env.get_available_actions()['clickables']
-        info['won'] = False
-        # 牛逼
-        # baseline_models/env.py中
-        # info.update({'goal': self.env.instruction_text, ...})
-        info['goal'] = self._env.instruction_text
+#         obs, info = self._env.reset(session=idx[0])
+#         # info被设为none导致没有goal  需要从环境变量获取
+#         info = dict(info or {})
+#         info['available_actions'] = self._env.get_available_actions()['clickables']
+#         info['won'] = False
+#         # 牛逼
+#         # baseline_models/env.py中
+#         # info.update({'goal': self.env.instruction_text, ...})
+#         info['goal'] = self._env.instruction_text
         
-        obs_list = [obs] * self.num_processes
-        info_list = [info] * self.num_processes
+#         obs_list = [obs] * self.num_processes
+#         info_list = [info] * self.num_processes
         
-        return obs_list, info_list
+#         return obs_list, info_list
     
-    def close(self):
-        """Close the environment."""
-        self._env.close()
+#     def close(self):
+#         """Close the environment."""
+#         self._env.close()
     
-    def get_available_actions(self):
-        """Get available actions from the environment."""
-        return self._env.get_available_actions()
+#     def get_available_actions(self):
+#         """Get available actions from the environment."""
+#         return self._env.get_available_actions()
     
-    def get_goals(self):
-        """Get environment goals."""
-        return self._env.server.goals
+#     def get_goals(self):
+#         """Get environment goals."""
+#         return self._env.server.goals
 # exit(0)
 # Util Functions
 import re
 from openai import OpenAI
 
 
-def extract_think_and_action(text, use_para=0, num_para=1):
+def extract_think_and_action(text, use_para=0, num_para=1, total_envs=1):
     think_pattern = r'<think>(.*?)</think>'
     think_match = re.search(think_pattern, text, re.DOTALL)
     think_content = think_match.group(1).strip() if think_match else None
@@ -218,12 +218,17 @@ def extract_think_and_action(text, use_para=0, num_para=1):
             'action': action_content
         }
     else:
+        actions_dict = {idx: "null" for idx in range(1, total_envs + 1)}
         
-        actions_pattern = r'<env_\d+>(.*?)</env_\d+>'
-        actions = re.findall(actions_pattern, text, re.DOTALL)
-        actions_dict = {}
-        for index, action in enumerate(actions):
-            actions_dict[index + 1] = action.strip()
+        env_pattern = r'<env_(\d+)>(.*?)</env_\d+>'
+        matches = re.findall(env_pattern, text, re.DOTALL)
+        
+        for env_index, action in matches:
+            env_index = int(env_index)
+            if 1 <= env_index <= total_envs:
+                action = action.strip()
+                if action and action != 'None' and action != 'null':
+                    actions_dict[env_index] = action
         
         return {
             'think': think_content,
@@ -231,13 +236,6 @@ def extract_think_and_action(text, use_para=0, num_para=1):
         }
 
 # 根据任务描述+动作字符串规范动作
-# search[keywords] or click[value]
-def normalize_action(action, task_description):
-    if not action or action == 'None':
-        return None
-    return action
-
-
 def read_json(file_path):
     data = json.load(open(file_path,'r'))
     return data
@@ -269,7 +267,7 @@ def get_unique_filename(file_path):
 
 # Main Logic - Generate coldstart data for WebShop
 def get_single_trajectory(env, task_idx,env_idx=0, turns=50,  show_turn=False, use_history=True,
-                          use_para=0, num_para=1):
+                          use_para=0, num_para=1, env_num=50, group_n=1):
     """
     Generate a single trajectory for WebShop environment with multiple turns
     Returns messages in the format:
@@ -286,7 +284,9 @@ def get_single_trajectory(env, task_idx,env_idx=0, turns=50,  show_turn=False, u
         show_turn: If True, adds turn number markers to message contents
         use_history: If True, use WEBSHOP_TEMPLATE with history, else use WEBSHOP_TEMPLATE_NO_HIS
         use_para: If > 0, use parallel environment mode with <env_i> tags
-        num_para: Number of parallel environments
+        num_para: Number of parallel environments to select each turn
+        env_num: Number of environments per group
+        group_n: Number of groups
     """
     messages = []
     
@@ -296,8 +296,9 @@ def get_single_trajectory(env, task_idx,env_idx=0, turns=50,  show_turn=False, u
     # Initialize observations and infos for all parallel environments
     if use_para > 0:
         # 根据平行数获取多组观测和信息（并行模式）
-        obs_parallel = obs_list[:num_para]
-        info_parallel = info_list[:num_para]
+        total_envs = group_n * env_num
+        obs_parallel = obs_list[:total_envs]
+        info_parallel = info_list[:total_envs]
         task_descriptions = [info.get('goal', 'Find and purchase a product') for info in info_parallel]
         available_actions_parallel = [info.get('available_actions', []) for info in info_parallel]
     else:
@@ -316,7 +317,8 @@ def get_single_trajectory(env, task_idx,env_idx=0, turns=50,  show_turn=False, u
     if use_para == 0:
         messages.append({"role": "system", "content": system_message})
     else:  
-        messages.append({"role": "system", "content": system_message_para.format(num_parallel=num_para)})
+        total_envs = group_n * env_num
+        messages.append({"role": "system", "content": system_message_para.format(num_parallel=num_para, total_envs=total_envs)})
     
     for turn in range(turns):
         # Build user prompt with task description, current observation, and available actions
@@ -343,8 +345,9 @@ def get_single_trajectory(env, task_idx,env_idx=0, turns=50,  show_turn=False, u
         else:
             # 多环境并行模式：构建包含所有环境观察的prompt
             # 不使用历史
+            total_envs = group_n * env_num
             obs_prompt = ''
-            for idx in range(num_para):
+            for idx in range(total_envs):
                 admissible_commands = "\n".join([f"  - {action}" for action in available_actions_parallel[idx]])
                 obs_prompt += f'<observation_{idx+1}>\nThe observation and next candidated actions of {idx+1}-th environment are:\nObservation:\n{obs_parallel[idx]}\nNext Possible Actions:\n{admissible_commands}\n</observation_{idx+1}>\n'
             
@@ -352,14 +355,16 @@ def get_single_trajectory(env, task_idx,env_idx=0, turns=50,  show_turn=False, u
                 task_description=task_descriptions[0],
                 current_observation=obs_prompt,
                 admissible_actions="\n".join([f"  - {action}" for actions in available_actions_parallel for action in actions]),
-                num_parallel=num_para
+                num_parallel=num_para,
+                total_envs=total_envs
             )
         
         # Add user message (user提出需求)
         messages.append({"role": "user", "content": formatted_prompt})
         
         output = deepseek(messages=messages)
-        result = extract_think_and_action(output, use_para=use_para, num_para=num_para)
+        total_envs = group_n * env_num if use_para > 0 else 1
+        result = extract_think_and_action(output, use_para=use_para, num_para=num_para, total_envs=total_envs)
         
         # Build assistant_response based on mode
         if use_para == 0:
@@ -378,14 +383,15 @@ def get_single_trajectory(env, task_idx,env_idx=0, turns=50,  show_turn=False, u
         
         # Execute action and get next observation
         normalized_actions = None
-        done_list = [False] * (num_para if use_para > 0 else 1)
-        reward_list = [None] * (num_para if use_para > 0 else 1)
-        action_valid_list = [False] * (num_para if use_para > 0 else 1)
+        total_envs = group_n * env_num if use_para > 0 else 1
+        done_list = [False] * total_envs
+        reward_list = [None] * total_envs
+        action_valid_list = [False] * total_envs
         
         if use_para == 0:
             # 单环境模式动作执行
             if result['action'] and result['action'] != 'None':
-                normalized_action = normalize_action(result['action'], task_description)
+                normalized_action = result['action']
                 
                 if normalized_action:
                     actions = [normalized_action]
@@ -415,19 +421,17 @@ def get_single_trajectory(env, task_idx,env_idx=0, turns=50,  show_turn=False, u
                 reward = None
         else:
             # 多环境并行模式动作执行
+            total_envs = group_n * env_num
             if result.get('actions') and len(result['actions']) > 0:
                 normalized_actions = []
-                for idx in range(1, num_para + 1):
-                    action = result['actions'].get(idx, None)
-                    if action and action != 'None':
-                        normalized_action = normalize_action(action, task_descriptions[idx - 1])
-                        normalized_actions.append(normalized_action)
-                    else:
-                        normalized_actions.append(None)
+                for idx in range(1, total_envs + 1):
+                    # action = result['actions'].get(idx, "null")  # 默认就是"null"
+                    action = result['actions'].get(idx)
+                    normalized_actions.append(action)
                 
                 # 过滤有效动作并执行
                 # reward_list和reward为单值
-                valid_actions = [a if a else "None" for a in normalized_actions]
+                valid_actions = normalized_actions.copy()
                 # 兼容不同环境的 step 返回值
                 step_result = env.step(valid_actions)
                 if len(step_result) == 6:
@@ -442,25 +446,29 @@ def get_single_trajectory(env, task_idx,env_idx=0, turns=50,  show_turn=False, u
                 
                 # 更新 action_valid_list
                 # action_valids 是单个值，需要转换为列表
-                action_valid_list = [action_valids] * num_para
-                # 更新 reward_list（截断到 num_para）
-                reward_list = reward_list[:num_para]
+                action_valid_list = [action_valids] * total_envs
+                # 更新 reward_list（截断到 total_envs）
+                reward_list = reward_list[:total_envs]
                 
                 # 更新每个环境的状态
-                obs_parallel = obs_list[:num_para]
-                info_parallel = info_list[:num_para]
+                obs_parallel = obs_list[:total_envs]
+                info_parallel = info_list[:total_envs]
                 task_descriptions = [info.get('goal', 'Find and purchase a product') for info in info_parallel]
                 available_actions_parallel = [info.get('available_actions', []) for info in info_parallel]
                 
                 # 记录历史
-                for idx in range(num_para):
+                total_envs = group_n * env_num
+                for idx in range(total_envs):
                     if normalized_actions[idx]:
                         action_history.append({
                             'obs': obs_parallel[idx],
                             'action': result['actions'].get(idx + 1, '')
                         })
             else:
-                rewards = [None] * num_para
+                # 没有有效动作，reward_list为 None
+                total_envs = group_n * env_num
+                rewards = [None] * total_envs
+                reward_list = rewards
         
         # Add assistant message (assistant作回复)
         if use_para == 0:
@@ -501,12 +509,12 @@ def get_single_trajectory(env, task_idx,env_idx=0, turns=50,  show_turn=False, u
                 break
         else:
             # 多环境模式：任一环境完成或所有环境都无效则结束
-            all_done = all(done_list[:num_para])
-            any_done = any(done_list[:num_para])
-            all_invalid = not normalized_actions or all(a is None for a in normalized_actions)
+            total_envs = group_n * env_num
+            any_done = any(done_list[:total_envs])
+            all_invalid = not normalized_actions or all(a is None or a == 'null' or a == 'None' for a in normalized_actions)
 
             if any_done:
-                completed_idx = [i for i, done in enumerate(done_list[:num_para]) if done]
+                completed_idx = [i+1 for i, done in enumerate(done_list[:total_envs]) if done]
                 print(f"Task {task_idx} completed at turn {turn + 1} in environments {completed_idx}")
                 break
             elif all_invalid:
@@ -544,6 +552,13 @@ def generate_coldstart_data(output_file, num_cpus=0.1, num_samples=500, turns=50
         print('use_history True')
     else:
         print('use_history False')
+    
+    if use_para > 0:
+        expected_num_para = group_n * env_num
+        if num_para > expected_num_para:
+            print(f"num_para ({num_para}) > group_n * env_num ({group_n} * {env_num} = {expected_num_para})")
+            print("exiting...")
+            exit(1)
     
     env_start_time = time.time()
     # Get unique filename if file exists
@@ -594,15 +609,16 @@ def generate_coldstart_data(output_file, num_cpus=0.1, num_samples=500, turns=50
             env_kwargs=env_kwargs
         )
     else:
-        env = WebshopSingleEnv(
-            seed=42,
-            # seed=np.random.randint(0, 100),
-            env_num=1,
-            group_n=1,
-            is_train=True,
-            split='sft',
-            env_kwargs=env_kwargs
-        )
+        pass
+        # env = WebshopSingleEnv(
+        #     seed=42,
+        #     # seed=np.random.randint(0, 100),
+        #     env_num=1,
+        #     group_n=1,
+        #     is_train=True,
+        #     split='sft',
+        #     env_kwargs=env_kwargs
+        # )
     
     print(f'Environment built, took {time.time() - env_start_time} seconds')
     
@@ -620,7 +636,8 @@ def generate_coldstart_data(output_file, num_cpus=0.1, num_samples=500, turns=50
             # 得到单条轨迹
             # env = WebshopSingleEnv
             trajectory = get_single_trajectory(env, task_idx=i, env_idx=0, turns=turns, use_para=use_para, 
-                                               show_turn=show_turn, num_para=num_para, use_history=use_history)
+                                               show_turn=show_turn, num_para=num_para, use_history=use_history,
+                                               env_num=env_num, group_n=group_n)
             # For non-Ray mode, each trajectory is a messages list
             coldstart_data.append(trajectory)
             
@@ -740,7 +757,7 @@ if __name__ == "__main__":
         generate_coldstart_data(OUTPUT_FILE, num_samples=3, turns=10, 
                                 # use_ray=False, 
                                 num_cpus=0.5,
-                                use_para=1, num_para=5, group_n=5, env_num=1,
+                                use_para=1, num_para=5, group_n=8, env_num=1,
                                 show_turn=1, use_history=0, load_all=0, 
                                 # human_goals=True, 
                                 human_goals=False,

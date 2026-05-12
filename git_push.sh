@@ -45,6 +45,7 @@ echo "=== 排除不需要的文件夹和大文件 ==="
 EXCLUDE_PATHS=(
     "model/"
     "coldstart_example/"
+    "data/"
     # "coldstart_genaration_webshop/"
     "*.pt"
     "*.ckpt"

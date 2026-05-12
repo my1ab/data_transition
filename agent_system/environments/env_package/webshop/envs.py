@@ -171,46 +171,46 @@ class WebshopMultiProcessEnv(gym.Env):
         goals_future = self._workers[0].get_goals.remote()
         goals = ray.get(goals_future)
 
-        # ------- Four-way split strategy (ordered by training flow) ----------#
-        # sft: 0-2500      → SFT训练专用（训练第一步）
-        # train: 2500-5000 → RL训练专用（训练第二步）
-        # eval: 5000-6000  → RL验证专用（训练第三步）
-        # test: 6000-      → 最终评估专用（训练第四步）
-        # ---------------------------------------------------------------------------#
-        # 按训练流程顺序排列：SFT → RL训练 → RL验证 → 最终评估
-        # if split == 'sft':
-        #     self.goal_idxs = range(min(2500, len(goals)))
-        # elif split == 'train':
-        #     self.goal_idxs = range(2500, min(5000, len(goals)))
-        # elif split == 'eval':
-        #     self.goal_idxs = range(5000, min(6000, len(goals)))
-        # elif split == 'test':
-        #     self.goal_idxs = range(6000, len(goals))
-        # else:
-        #     # Default to train split if invalid split is provided
-        #     self.goal_idxs = range(2500, min(5000, len(goals)))
+        # 6910 total
+        if split == 'test':
+            self.goal_idxs = range(500)
+        elif split == 'eval':
+            self.goal_idxs = range(500, 1500)
+        elif split == 'train':
+            self.goal_idxs = range(1500, len(goals))
+        elif split == 'sft':
+            # self.goal_idxs = range(len(goals))
+            # self.goal_idxs = range(500, len(goals))
+            self.goal_idxs = range(550, len(goals))
+            # self.goal_idxs = range(1500, len(goals))
+            # if len(goals) >= 2500:
+            #     self.goal_idxs = range(2500, len(goals))
+            # else:
+            #     self.goal_idxs = range(len(goals))
+        else:
+            self.goal_idxs = range(len(goals))
 
         # 以下为原始代码，此时为顺序读取
         # ------- original ----------#
-        if args.num is None:
-            if split == 'test':
-                self.goal_idxs = range(500)
-            elif split == 'eval':
-                self.goal_idxs = range(500, 1500)
-            elif split == 'train':
-                self.goal_idxs = range(1500, len(self.env.server.goals))
-            elif split == 'sft':
-                # self.goal_idxs = range(min(2500, len(goals)))
-                self.goal_idxs = range(1500, len(self.env.server.goals))
-        else:
-            self.goal_idxs = range(len(self.env.server.goals))
+        # if args.num is None:
+        #     if split == 'test':
+        #         self.goal_idxs = range(500)
+        #     elif split == 'eval':
+        #         self.goal_idxs = range(500, 1500)
+        #     elif split == 'train':
+        #         self.goal_idxs = range(1500, len(self.env.server.goals))
+        #     elif split == 'sft':
+        #         # self.goal_idxs = range(min(2500, len(goals)))
+        #         self.goal_idxs = range(1500, len(self.env.server.goals))
+        # else:
+        #     self.goal_idxs = range(len(self.env.server.goals))
 
         # if not self.is_train:
         #     self.goal_idxs = range(500)
         # else:
         #     self.goal_idxs = range(500, len(goals))
             
-        print(f"Split: {split}, Goal indices: {self.goal_idxs}")
+        print(f"\n Split: {split}, Goal indices: {self.goal_idxs} \n")
 
         
     # ------------------------------------------------------------------
