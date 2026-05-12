@@ -46,6 +46,7 @@ EXCLUDE_PATHS=(
     "model/"
     "coldstart_example/"
     "data/"
+    "coldstart_result_webshop/"
     # "coldstart_genaration_webshop/"
     "*.pt"
     "*.ckpt"
