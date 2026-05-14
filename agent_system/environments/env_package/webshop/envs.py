@@ -181,7 +181,7 @@ class WebshopMultiProcessEnv(gym.Env):
         elif split == 'sft':
             # self.goal_idxs = range(len(goals))
             # self.goal_idxs = range(500, len(goals))
-            self.goal_idxs = range(550, len(goals))
+            self.goal_idxs = range(600, len(goals))
             # self.goal_idxs = range(1500, len(goals))
             # if len(goals) >= 2500:
             #     self.goal_idxs = range(2500, len(goals))
@@ -246,6 +246,8 @@ class WebshopMultiProcessEnv(gym.Env):
         # idx = np.repeat(idx, self.group_n).tolist()
         # 
         # Fixed reset logic (handles empty goal_idxs):
+        # 基于上文决定的范围与seed采样得到idx
+        # self._rng为可复现的随机数生成器  线性放缩到指定范围
         goal_idxs_list = list(self.goal_idxs)
         if len(goal_idxs_list) == 0:
             raise ValueError("No goals available to sample from")

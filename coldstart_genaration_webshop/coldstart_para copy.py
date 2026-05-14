@@ -30,7 +30,7 @@ from agent_system.environments.env_package.webshop import webshop_projection
 # from agent_system.environments.prompts.webshop import WEBSHOP_TEMPLATE as AGENT_WEBSHOP_TEMPLATE
 # 引入本地官方 prompt
 from webshop import WEBSHOP_TEMPLATE_NO_HIS, WEBSHOP_TEMPLATE, system_message
-from prompts_webshop import system_message_para, reason_prompt_para
+from coldstart_genaration_webshop.prompts_webshop规则版 import system_message_para, reason_prompt_para
 from prompts_webshop2 import system_message_para2, reason_prompt_para2
 # /home/dpepo/verl-agent/agent_system/environments/env_package/webshop/webshop/web_agent_site/envs/web_agent_text_env.py
 from agent_system.environments.env_package.webshop.webshop.web_agent_site.envs.web_agent_text_env \

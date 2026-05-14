@@ -29,9 +29,10 @@ from agent_system.environments.env_package.webshop import webshop_projection
 # from agent_system.environments.prompts.webshop import WEBSHOP_TEMPLATE_NO_HIS as AGENT_WEBSHOP_TEMPLATE_NO_HIS
 # from agent_system.environments.prompts.webshop import WEBSHOP_TEMPLATE as AGENT_WEBSHOP_TEMPLATE
 # 引入本地官方 prompt
-from webshop import WEBSHOP_TEMPLATE_NO_HIS, WEBSHOP_TEMPLATE, system_message
-from prompts_webshop import system_message_para, reason_prompt_para
-from prompts_webshop2 import system_message_para2, reason_prompt_para2, reason_prompt_para2_with_history
+# from webshop import WEBSHOP_TEMPLATE_NO_HIS, WEBSHOP_TEMPLATE, system_message
+# from coldstart_genaration_webshop.prompts_webshop规则版 import system_message_para, reason_prompt_para
+from coldstart_genaration_webshop.prompts_webshop import system_message_para, reason_prompt_para
+from prompts_webshop2 import system_message_para2,reason_prompt_para2_with_history
 # /home/dpepo/verl-agent/agent_system/environments/env_package/webshop/webshop/web_agent_site/envs/web_agent_text_env.py
 from agent_system.environments.env_package.webshop.webshop.web_agent_site.envs.web_agent_text_env \
 import WebAgentTextEnv
@@ -42,9 +43,11 @@ print("import WebAgentTextEnv success")
 
 remote = 0
 
-def deepseek(messages, ds_model=1, effort=1):
+def deepseek(messages, ds_model=1, effort=1, show=0):
     # sk-05267e6863d6455eb1a8c2fc92df3005
-    client = OpenAI(api_key="sk-05267e6863d6455eb1a8c2fc92df3005", base_url="https://api.deepseek.com")
+    # client = OpenAI(api_key="sk-05267e6863d6455eb1a8c2fc92df3005", base_url="https://api.deepseek.com")
+    # sk-d588ac9454c84f4186db19750c4c8a11
+    client = OpenAI(api_key="sk-d588ac9454c84f4186db19750c4c8a11", base_url="https://api.deepseek.com")
 
     if ds_model == 1:
         model_name = "deepseek-v4-flash"
@@ -52,8 +55,6 @@ def deepseek(messages, ds_model=1, effort=1):
         # exit(0)
     elif ds_model == 2:
         model_name = "deepseek-v4-pro"
-    else:
-        model_name = "deepseek-v4-flash"
 
     if effort == 1:
         reasoning_effort = "high"
@@ -61,21 +62,38 @@ def deepseek(messages, ds_model=1, effort=1):
         # exit(0)
     elif effort == 2:
         reasoning_effort = "max"
-    else:
-        reasoning_effort = "high"
+
+
+    # response = client.chat.completions.create(
+    #     model=model_name,
+    #     reasoning_effort=reasoning_effort,
+    #     # reasoning_effort="high",
+    #     extra_body={"thinking": {"type": "enabled"}},
+    #     # extra_body={"thinking": {"type": "disabled"}},
+    #     messages=messages,
+    #     stream=False,
+    #     # temperature=1,
+    # )
 
     response = client.chat.completions.create(
         # model="deepseek-chat",
-        model=model_name,
+        model="deepseek-v4-flash",
+        # reasoning_effort="high",
+        # model=model_name,
+        # reasoning_effort=reasoning_effort,
+        # extra_body={"thinking": {"type": "enabled"}},
+        extra_body={"thinking": {"type": "disabled"}},
         messages=messages,
         stream=False,
-        # reasoning_effort="high",
-        reasoning_effort=reasoning_effort,
-        extra_body={"thinking": {"type": "enabled"}}
         # temperature=1,
-        
     )
-    
+
+    if(show):
+        if effort!=0:
+            print(f'model: {model_name}, effort: {reasoning_effort}')
+        else:
+            print(f'model: {model_name}, disabled thinking')
+        
     return response.choices[0].message.content 
 
 def test_api_connection():
@@ -630,10 +648,76 @@ if __name__ == "__main__":
                                     ds_model=1, 
                                     effort=1,
                                     seed=seed,
-                                    start_index=50,
-                                    end_idx=99,
+                                    # start_index=400,
+                                    # end_idx=499,
+                                    # start_index=500,
+                                    # end_idx=599,
+                                    # start_index=100,
+                                    # end_idx=199,
+                                    start_index=300,
+                                    end_idx=399,
                                     only_test=0
                                     )
+            
+            print(f"\n{'='*80}\n")
+            print(f"Generating data with seed={seed}")
+            output_file = get_unique_filename(OUTPUT_FILE)
+            print(f"Output file: {output_file}")
+            print(f"\n{'='*80}\n")
+            
+            generate_coldstart_data(output_file,  turns=50, 
+                                    num_cpus=1,
+                                    use_para=1, num_para=5, group_n=1, env_num=5,
+                                    show_turn=1,  
+                                    use_history=0,
+                                    load_all=0, 
+                                    human_goals=False,
+                                    prompt=1,
+
+                                    ds_model=1, 
+                                    effort=1,
+                                    seed=seed,
+                                    # start_index=400,
+                                    # end_idx=499,
+                                    # start_index=500,
+                                    # end_idx=599,
+                                    # start_index=100,
+                                    # end_idx=199,
+                                    start_index=600,
+                                    end_idx=699,
+                                    only_test=0
+                                    )
+            
+            print(f"\n{'='*80}\n")
+            print(f"Generating data with seed={seed}")
+            output_file = get_unique_filename(OUTPUT_FILE)
+            print(f"Output file: {output_file}")
+            print(f"\n{'='*80}\n")
+            
+            generate_coldstart_data(output_file,  turns=50, 
+                                    num_cpus=1,
+                                    use_para=1, num_para=5, group_n=1, env_num=5,
+                                    show_turn=1,  
+                                    use_history=0,
+                                    load_all=0, 
+                                    human_goals=False,
+                                    prompt=1,
+
+                                    ds_model=1, 
+                                    effort=1,
+                                    seed=seed,
+                                    # start_index=400,
+                                    # end_idx=499,
+                                    # start_index=500,
+                                    # end_idx=599,
+                                    # start_index=100,
+                                    # end_idx=199,
+                                    start_index=700,
+                                    end_idx=799,
+                                    only_test=0
+                                    )
+            
+            
             
             print(f"\n{'='*80}\n")
             print(f"Finished generating data with seed={seed}")
