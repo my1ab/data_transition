@@ -654,66 +654,8 @@ if __name__ == "__main__":
                                     # end_idx=599,
                                     # start_index=100,
                                     # end_idx=199,
-                                    start_index=300,
-                                    end_idx=399,
-                                    only_test=0
-                                    )
-            
-            print(f"\n{'='*80}\n")
-            print(f"Generating data with seed={seed}")
-            output_file = get_unique_filename(OUTPUT_FILE)
-            print(f"Output file: {output_file}")
-            print(f"\n{'='*80}\n")
-            
-            generate_coldstart_data(output_file,  turns=50, 
-                                    num_cpus=1,
-                                    use_para=1, num_para=5, group_n=1, env_num=5,
-                                    show_turn=1,  
-                                    use_history=0,
-                                    load_all=0, 
-                                    human_goals=False,
-                                    prompt=1,
-
-                                    ds_model=1, 
-                                    effort=1,
-                                    seed=seed,
-                                    # start_index=400,
-                                    # end_idx=499,
-                                    # start_index=500,
-                                    # end_idx=599,
-                                    # start_index=100,
-                                    # end_idx=199,
-                                    start_index=600,
-                                    end_idx=699,
-                                    only_test=0
-                                    )
-            
-            print(f"\n{'='*80}\n")
-            print(f"Generating data with seed={seed}")
-            output_file = get_unique_filename(OUTPUT_FILE)
-            print(f"Output file: {output_file}")
-            print(f"\n{'='*80}\n")
-            
-            generate_coldstart_data(output_file,  turns=50, 
-                                    num_cpus=1,
-                                    use_para=1, num_para=5, group_n=1, env_num=5,
-                                    show_turn=1,  
-                                    use_history=0,
-                                    load_all=0, 
-                                    human_goals=False,
-                                    prompt=1,
-
-                                    ds_model=1, 
-                                    effort=1,
-                                    seed=seed,
-                                    # start_index=400,
-                                    # end_idx=499,
-                                    # start_index=500,
-                                    # end_idx=599,
-                                    # start_index=100,
-                                    # end_idx=199,
-                                    start_index=700,
-                                    end_idx=799,
+                                    start_index=0,
+                                    end_idx=99,
                                     only_test=0
                                     )
             

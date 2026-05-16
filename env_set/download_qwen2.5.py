@@ -2,7 +2,7 @@ from huggingface_hub import snapshot_download
 import os
 # os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 # MODEL_NAME = "Qwen/Qwen2.5-0.5B"
-MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
+MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct"
 MODEL_DIR_NAME = MODEL_NAME.split("/")[-1]
 OUTPUT_DIR = os.path.join("./model", MODEL_DIR_NAME)
 
