@@ -438,6 +438,7 @@ def get_single_trajectory(env, task_idx, env_idx=0, turns=50, show_turn=False,
         status_msg = f"Task {task_idx} out of max turn"
         print(status_msg)
     return messages, success_flag, status_msg, seperated_list
+# 生成冷启动数据
 
 def generate_coldstart_data(output_file, num_cpus=0.1, end_idx=500, turns=50, use_ray=False, use_para=0, show_turn=False, 
                             load_all=0, human_goals=False, num_para=1, group_n=1, env_num=50,
